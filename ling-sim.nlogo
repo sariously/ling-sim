@@ -241,9 +241,10 @@ to local-network-stats
     set network-density (actual-connections / possible-connections)
     set max-weak [weak-tie-count] of one-of community-speakers with-max [weak-tie-count]
     set max-strong [strong-tie-count] of one-of community-speakers with-max [strong-tie-count]
-    ifelse any? community-speakers with [shortest-path < 0]
+    ifelse any? community-speakers with [shortest-path < 0] 
+     [set avg-shortest-path -999]
      [set avg-shortest-path mean [shortest-path] of community-speakers]
-     [set avg-shortest-path -999]]
+     ]
   
   
   
@@ -251,7 +252,9 @@ end
 
 to innovate ; a speaker procedure
   let the-innovator one-of speakers
-  ask speakers [set shortest-path  network:link-distance the-innovator links]
+  ask speakers [
+    if link-neighbor? the-innovator = True
+    [set shortest-path  network:link-distance the-innovator links]]
   ask the-innovator [set innovation? true
     set shape "box"
     set when-speaker-adopted 0
@@ -516,7 +519,7 @@ PENS
 
 @#$#@#$#@
 #ODD Description of Agent-based model of language change
-This file describes the model presented in the thesis of Sara Kazemi constructed in partial completion of the Master's degree program for Computational Linguistics at San Diego State University.
+This file describes the model presented in the thesis of Sara Kazemi constructed in partial completion of the Computational Linguistics Master's degree program at San Diego State University.
 
 ##Purpose
 In the real world, it is difficult to identify the exact origin of an innovation as it may only be identified once it has already become well established as a variant in the process of becoming a change. A benefit of computer simulation is that it enables us to evaluate hypotheses that might otherwise be difficult or impossible to test in the real world due to a scarcity of data (Railsback and Grimm, 2012, p. 4).
@@ -547,11 +550,11 @@ Collectives each have a POPULATION state variable determined stochastically duri
 The number of collectives generated during initialization is controlled by a slider that can be manipulated the user to create 10-100 collectives.
 
 ##Initialization
-The simulation is initialized by generating a random graph of the specified number of collectives on an 81 x 81 grid. Each new collective is linked to an older collective via preferential attachment, which results in a high number of collectives with one connection, and few collectives with many connections--a distribution which follows Zipf's Law. The population variable of each site is derived from the degree of connections that site has so that the population distribution of the graph will likewise follow Zipf's Law. After each site records its population value, the links between all sites are deleted as they are not used for any purpose beyond establishing population values.
+The simulation is initialized by generating a random graph of a user-provided number of collectives on an 81 x 81 grid. Collectives are created pseudorandomly (i.e., Collective 0 need not be the first collective created and need not be followed by Collective 1 during the creation process). To attain a realistic map of collectives with a population distribution that is consistent with an inverse power-law, the process of preferential attachment is employed such that, with the exception of the first collective generated, each new collective created is linked to a pre-existing collective, with a preference for collectives that have a larger number of pre-existing links. The degree of connections of each collective are then used to determine the POPULATION count of each collective, resulting in a high number of low-population collectives and very few high-population collectives. After each collective POPULATION value is determined, the links between all collectives are cleared as they are not used for any purpose beyond establishing population values. 
 
-The population values of each collective are then used to generate speakers at each site and the speakers encode which collective they belong to. Each speaker starts out with their boolean innovation? variable set to "false." As speakers are generated, they form weak-ties with other speakers through preferential attachment. This results in weak-ties both within and across local networks. Strong-ties between speakers are generated randomly within local networks, each speaker being limited a random number of strong-ties drawn from a Poisson distribution with a mean of 2. The network density of each collective is then computed.
+The POPULATION values of each collective are then used to generate speakers at each collective and the speakers encode which collective they belong to. Each speaker starts out with their Boolean INNOVATION? variable set to False. Each speaker is randomly assigned a THRESHOLD-LEVEL value (refer back to Table 1.3 for values) from a normal distribution. As speakers are generated, they form weak ties with other speakers through preferential attachment. This results in weak ties both within and across local networks. Strong ties between speakers are generated randomly within local networks, each speaker being limited a random number of strong ties drawn from a Poisson distribution with a mean of two. The NETWORK-DENSITY of each collective is then computed. Finally, one random speaker is chosen to create a linguistic innovation, and that speaker’s INNOVATION? value is set to True. 
 
-Finally, one random speaker is chosen to create a linguistic innovation, which results in that speaker setting its innovation? value to "true."
+Figure 2.5 illustrates a possible world initialized by the simulation. The target symbols, sized based on population, represent collectives, with the dots surrounding each collective being the individuals that comprise each collective. Colors are randomly applied to collectives (which carry over to individuals) in order to facilitate visual differentiation. The grey and white lines are ties linking one individual to another. Grey lines indicate weak ties while white lines indicate strong ties.
 
 
 ##Process Overview and Scheduling
@@ -978,10 +981,12 @@ repeat 100 [ layout ]
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="Thesis-runs" repetitions="5" runMetricsEveryStep="false">
+  <experiment name="ling-sim" repetitions="100" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <enumeratedValueSet variable="num-sites">
+      <value value="30"/>
+      <value value="60"/>
       <value value="90"/>
     </enumeratedValueSet>
   </experiment>
